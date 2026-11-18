@@ -31,5 +31,11 @@
     "linter",
     "github-action"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anas912847/skillcheck.git"
+  },
+  "homepage": "https://github.com/Anas912847/skillcheck#readme",
+  "bugs": "https://github.com/Anas912847/skillcheck/issues"
 }

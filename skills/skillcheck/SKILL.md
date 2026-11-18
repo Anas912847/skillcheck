@@ -30,7 +30,7 @@ A skill runs with the agent's permissions: its scripts execute on the user's mac
 3. Offer to add the GitHub Action so every pull request gets checked:
 
    ```yaml
-   - uses: OWNER/skillcheck@v1
+   - uses: Anas912847/skillcheck@v1
      with:
        strict: true
    ```

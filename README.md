@@ -3,7 +3,7 @@
 **Scan Agent Skills before you install them.**
 
 [![npm](https://img.shields.io/npm/v/skillcheck)](https://www.npmjs.com/package/skillcheck)
-[![CI](https://github.com/OWNER/skillcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/skillcheck/actions/workflows/ci.yml)
+[![CI](https://github.com/Anas912847/skillcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/Anas912847/skillcheck/actions/workflows/ci.yml)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: OWNER/skillcheck@v1
+      - uses: Anas912847/skillcheck@v1
         with:
           path: skills            # default: the whole repo
           strict: true            # fail on warnings too
@@ -125,7 +125,7 @@ jobs:
 The repo ships a skill that tells your agent to run `skillcheck` whenever you ask it to install, add or publish a skill, and to walk you through the findings before going further.
 
 ```bash
-npx skills add OWNER/skillcheck
+npx skills add Anas912847/skillcheck
 ```
 
 Or copy [`skills/skillcheck`](skills/skillcheck/SKILL.md) into your agent's skills folder (`~/.claude/skills/` for Claude Code).
