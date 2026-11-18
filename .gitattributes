@@ -1,0 +1,2 @@
+# LF everywhere: a CRLF shebang breaks `npx skillcheck` on Linux and macOS.
+* text=auto eol=lf

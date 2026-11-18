@@ -1,0 +1,35 @@
+{
+  "name": "skillcheck",
+  "version": "0.1.0",
+  "description": "Lint and security-scan Agent Skills (SKILL.md) for Claude Code, Codex, Cursor and friends, before you install them.",
+  "type": "module",
+  "bin": {
+    "skillcheck": "bin/skillcheck.js"
+  },
+  "exports": "./src/index.js",
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/skillcheck.test.js",
+    "dogfood": "node bin/skillcheck.js skills --strict"
+  },
+  "keywords": [
+    "agent-skills",
+    "skills",
+    "skill-md",
+    "claude-code",
+    "codex",
+    "cursor",
+    "ai-agents",
+    "security",
+    "prompt-injection",
+    "linter",
+    "github-action"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,29 @@
+name: skillcheck
+description: Lint and security-scan Agent Skills (SKILL.md) for Claude Code, Codex, Cursor and other agents.
+branding:
+  icon: shield
+  color: green
+inputs:
+  path:
+    description: Folders or SKILL.md files to scan, separated by spaces.
+    default: .
+  strict:
+    description: Fail on warnings too.
+    default: 'false'
+  ignore:
+    description: Comma-separated rule ids to skip.
+    default: ''
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        SC_PATH: ${{ inputs.path }}
+        SC_STRICT: ${{ inputs.strict }}
+        SC_IGNORE: ${{ inputs.ignore }}
+      run: |
+        args=()
+        if [ "$SC_STRICT" = "true" ]; then args+=(--strict); fi
+        if [ -n "$SC_IGNORE" ]; then args+=(--ignore "$SC_IGNORE"); fi
+        # shellcheck disable=SC2086 # SC_PATH is split on spaces on purpose
+        node "$GITHUB_ACTION_PATH/bin/skillcheck.js" $SC_PATH "${args[@]}"
