@@ -8,7 +8,9 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # No macOS: hosted macOS runners often sit at capacity, and this plain-Node
+        # code behaves the same there as on Linux.
+        os: [ubuntu-latest, windows-latest]
         node: [20, 24]
     runs-on: ${{ matrix.os }}
     steps:
