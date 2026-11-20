@@ -95,7 +95,7 @@ function clone(url, name, branch, label) {
     execFileSync('git', [
       '-c', 'protocol.allow=never', '-c', 'protocol.https.allow=always', '-c', 'protocol.ssh.allow=always',
       'clone', '--quiet', '--depth', '1', '--no-tags', ...(branch ? ['--branch', branch] : []), '--', url, dest,
-    ], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_LFS_SKIP_SMUDGE: '1' } });
+    ], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never', GIT_LFS_SKIP_SMUDGE: '1' } });
   } catch (e) {
     fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 3 });
     const why = String(e.stderr || e.message).trim().split('\n').pop();
@@ -112,7 +112,7 @@ const errors = findings.filter(f => f.severity === 'error').length;
 const warnings = findings.length - errors;
 const posix = p => p.split(path.sep).join('/');
 // Everything printed may come from an untrusted skill: neutralise control and invisible characters.
-const safe = s => String(s).replace(/[\x00-\x1f\x7f-\x9f​-‏‪-‮⁠-⁩﻿︀-️\u{e0000}-\u{e01ef}]/gu,
+const safe = s => String(s).replace(/[\x00-\x1f\x7f-\x9f\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\uFE00-\uFE0F\u{e0000}-\u{e01ef}]/gu,
   ch => `\\u{${ch.codePointAt(0).toString(16)}}`);
 
 if (values.json) {
@@ -147,7 +147,7 @@ if (values.json) {
   const clean = all.filter(s => !s.findings.length).length;
   const icon = errors ? red('✖') : warnings ? yellow('!') : green('✔');
   const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-  console.log(`\n${icon} ${plural(all.length, 'skill')} checked: ${plural(errors, 'error')}, ${plural(warnings, 'warning')}, ${clean} clean`);
+  if (all.length) console.log(`\n${icon} ${plural(all.length, 'skill')} checked: ${plural(errors, 'error')}, ${plural(warnings, 'warning')}, ${clean} clean`);
 
   // Inline annotations on pull requests when running in GitHub Actions.
   if (process.env.GITHUB_ACTIONS === 'true') {

@@ -36,6 +36,7 @@ export const RULES = {
   'agent-config': 'warn',
   'destructive-command': 'warn',
   'binary-file': 'warn',
+  'long-line': 'warn',
   'symlink': 'warn',
 };
 
@@ -49,14 +50,17 @@ const EXEC_EXT = /\.(exe|dll|so|dylib|bin|msi|scr|jar|class|pyc|node|wasm)$/i;
 
 // Bidi overrides (Trojan Source), Unicode tags (ASCII smuggling an LLM reads but a human can't see)
 // and supplementary variation selectors (emoji smuggling).
-const SMUGGLING = /[‪-‮⁦-⁩\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}]/gu;
+const SMUGGLING = /[\u202A-\u202E\u2066-\u2069\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}]/gu;
 // Zero-width characters and stray BOMs: often legit (emoji regexes, BOM stripping) but able to hide text.
 // A ZWJ right after a non-ASCII char is an emoji sequence, so it is allowed.
-const INVISIBLE = /[​‌⁠-⁤᠎﻿]|(?<![^\x00-\x7F])‍|[︀-️]{2,}/gu;
-const ANY_HIDDEN = /[‪-‮⁦-⁩\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}​-‍⁠-⁤᠎﻿︀-️]{2,}/gu;
+const INVISIBLE = /[\u200B\u200C\u2060-\u2064\u180E\uFEFF]|(?<![^\x00-\x7F])\u200D|[\uFE00-\uFE0F]{2,}/gu;
+const ANY_HIDDEN = /[\u202A-\u202E\u2066-\u2069\u{E0000}-\u{E007F}\u{E0100}-\u{E01EF}\u200B-\u200D\u2060-\u2064\u180E\uFEFF\uFE00-\uFE0F]{2,}/gu;
 
 // The curl/wget patterns need a URL, a host or a variable, so prose like "never run `curl | sh`" stays quiet.
-const FETCH = String.raw`\b(curl|wget)\b[^|\n]*(https?:\/\/|\$\{?\w|\b[\w-]+\.[a-z]{2,}\b)[^|\n]*`;
+// The URL test sits in a lookahead: two open-ended scans around an alternation made a crafted line backtrack for minutes.
+const FETCH = String.raw`\b(curl|wget)\b(?=[^|\n]*?(?:https?:\/\/|\$\{?\w|[\w-]\.[a-z]{2,}\b))[^|\n]*`;
+// Lines longer than this are scanned in overlapping windows, which keeps every pattern fast on minified or crafted files.
+const WINDOW = 2048, OVERLAP = 512, LONG_LINE = 4096;
 const PATTERNS = [
   ['remote-exec', new RegExp(FETCH + String.raw`\|\s*(sudo\s+)?(-\S+\s+)*(ba|z|da|k|fi)?sh\b`, 'i')],
   ['remote-exec', new RegExp(FETCH + String.raw`\|\s*(sudo\s+)?(python[\d.]*|node|perl|ruby|php)(\s+-)?\s*($|[;&|)'"\x60])`, 'i')],
@@ -84,7 +88,7 @@ const PATTERNS = [
   ['persistence', /\bcrontab\s+-|\/etc\/cron|\bLaunch(Agents|Daemons)\b|\bsystemctl\s+(--user\s+)?enable\b|\bschtasks(\.exe)?\s+\/create\b|\\CurrentVersion\\Run\b|\bauthorized_keys\b/i],
   ['agent-config', /--dangerously-skip-permissions|\bbypassPermissions\b|--dangerously-bypass-approvals-and-sandbox|--yolo\b/],
   ['agent-config', /\.claude[\/\\]settings(\.local)?\.json|\.cursor[\/\\]mcp\.json|\.codex[\/\\]config\.toml|claude_desktop_config\.json/],
-  ['destructive-command', /\brm\s+(-[a-zA-Z]+\s+)*-[a-zA-Z]*[rR][a-zA-Z]*(\s+-[a-zA-Z]+)*\s+["']?(\/|~\/?|\$\{?HOME\}?\/?)\*?["']?(\s|;|&|\||$)/],
+  ['destructive-command', /\brm\s+(?=(?:-[a-zA-Z]+\s+)*-[a-zA-Z]*[rR])(?:-[a-zA-Z]+\s+)+["']?(\/|~\/?|\$\{?HOME\}?\/?)\*?["']?(\s|;|&|\||$)/],
   ['destructive-command', /\bmkfs(\.\w+)?\s|\bdd\s+[^\n]*\bof=\/dev\/(sd|nvme|disk|hd)|:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:|\bFormat-Volume\b/i],
 ];
 
@@ -103,7 +107,7 @@ const MESSAGES = {
 // ---------- Frontmatter: a YAML subset, enough for SKILL.md ----------
 
 export function parseFrontmatter(text) {
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/);
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   const none = { data: {}, at: {}, problems: [], body: lines, bodyLine: 1 };
   if (lines[0].trimEnd() !== '---') return { ...none, error: 'missing' };
   const end = lines.findIndex((l, i) => i > 0 && /^(---|\.\.\.)\s*$/.test(l));
@@ -322,12 +326,17 @@ function scanFile({ file, symlink }, add) {
   if (buf[0] === 0xff && buf[1] === 0xfe) text = buf.toString('utf16le');
   else if (buf.subarray(0, 8000).includes(0)) return; // images, fonts, archives
   else text = buf.toString('utf8');
-  text.split(/\r?\n/).forEach((line, i) => scanLine(line, i, file, add));
+  const lines = text.split(/\r?\n/);
+  const long = lines.findIndex(l => l.length > LONG_LINE);
+  if (long !== -1) {
+    add('long-line', file, long + 1, `line is ${lines[long].length.toLocaleString('en-US')} characters long: minified or generated code is hard to review, and commands spread across it can slip past pattern checks`);
+  }
+  lines.forEach((line, i) => scanLine(line, i, file, add));
 }
 
 function scanLine(line, i, file, add) {
   const smuggling = [...line.matchAll(SMUGGLING)];
-  const invisible = [...line.matchAll(INVISIBLE)].filter(m => !(i === 0 && m.index === 0 && m[0] === '﻿'));
+  const invisible = [...line.matchAll(INVISIBLE)].filter(m => !(i === 0 && m.index === 0 && m[0] === '\uFEFF'));
   if (smuggling.length || invisible.length) {
     const counts = {};
     for (const m of [...smuggling, ...invisible]) {
@@ -347,13 +356,18 @@ function scanLine(line, i, file, add) {
     else if (smuggling.length) add('hidden-unicode', file, i + 1, `invisible characters (${codes}) can reorder or hide text from human reviewers`, shown);
     else add('invisible-chars', file, i + 1, `zero-width characters (${codes}): often harmless, but they can hide text from reviewers`, shown);
   }
+  // ponytail: a command stretched over more than OVERLAP characters of one long line can fall between two windows;
+  // the long-line warning flags those files for a human. A real fix is a linear-time matcher per rule.
   const hit = new Set();
-  for (const [rule, re] of PATTERNS) {
-    if (hit.has(rule)) continue;
-    const m = re.exec(line);
-    if (m) {
-      hit.add(rule);
-      add(rule, file, i + 1, MESSAGES[rule], clip(line, m.index));
+  for (let start = 0; start === 0 || start < line.length - OVERLAP; start += WINDOW - OVERLAP) {
+    const chunk = line.length > WINDOW ? line.slice(start, start + WINDOW) : line;
+    for (const [rule, re] of PATTERNS) {
+      if (hit.has(rule)) continue;
+      const m = re.exec(chunk);
+      if (m) {
+        hit.add(rule);
+        add(rule, file, i + 1, MESSAGES[rule], clip(line, start + m.index));
+      }
     }
   }
 }

@@ -89,6 +89,7 @@ Checked against the [Agent Skills specification](https://agentskills.io/specific
 | `agent-config` | warn | `--dangerously-skip-permissions`, `bypassPermissions`, edits to agent settings files |
 | `destructive-command` | warn | `rm -rf ~`, `mkfs`, `dd` onto a disk, fork bombs |
 | `binary-file` | warn | compiled executables (PE, ELF, Mach-O, WebAssembly) that can't be reviewed |
+| `long-line` | warn | minified or generated lines over 4,096 characters, which are hard to review |
 | `symlink` | warn | symlinks, which can point the agent at any file on your disk |
 
 Errors fail the run. Warnings are things a reviewer should look at: a Slack skill calling a Slack webhook is fine, a PDF skill reading your SSH keys is not.

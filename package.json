@@ -1,6 +1,6 @@
 {
   "name": "skillcheck-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lint and security-scan Agent Skills (SKILL.md) for Claude Code, Codex, Cursor and friends, before you install them.",
   "type": "module",
   "bin": {
