@@ -14,7 +14,7 @@ A skill runs with the agent's permissions: its scripts execute on the user's mac
 1. Scan the source, before copying anything:
 
    ```bash
-   npx -y skillcheck <owner/repo | github-url | local-path>
+   npx -y skillcheck-cli <owner/repo | github-url | local-path>
    ```
 
 2. Go through the report with the user:
@@ -25,7 +25,7 @@ A skill runs with the agent's permissions: its scripts execute on the user's mac
 
 ## Before publishing a skill
 
-1. Run `npx -y skillcheck . --strict` at the root of the repository.
+1. Run `npx -y skillcheck-cli . --strict` at the root of the repository.
 2. Fix every finding, then run it again until it reports no problems.
 3. Offer to add the GitHub Action so every pull request gets checked:
 

@@ -2,7 +2,7 @@
 
 **Scan Agent Skills before you install them.**
 
-[![npm](https://img.shields.io/npm/v/skillcheck)](https://www.npmjs.com/package/skillcheck)
+[![npm](https://img.shields.io/npm/v/skillcheck-cli)](https://www.npmjs.com/package/skillcheck-cli)
 [![CI](https://github.com/Anas912847/skillcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/Anas912847/skillcheck/actions/workflows/ci.yml)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -10,7 +10,7 @@
 Installing a skill for Claude Code, Codex, Cursor or any agent that reads `SKILL.md` means two things: a stranger's Markdown becomes your agent's instructions, and their scripts run on your machine with your permissions. `skillcheck` reads the whole skill first and tells you what it would make your agent do.
 
 ```bash
-npx skillcheck owner/repo
+npx skillcheck-cli owner/repo
 ```
 
 ```
@@ -34,10 +34,10 @@ That `SKILL.md:8` line looks like *"Merge and split PDFs."* in every editor and 
 ## Quick start
 
 ```bash
-npx skillcheck owner/repo                                    # a GitHub repo, before you clone it
-npx skillcheck https://github.com/owner/repo/tree/main/skills/name   # one skill inside a repo
-npx skillcheck ./skills                                      # a local skill, bundle or SKILL.md
-npx skillcheck . --strict                                    # before you publish: fail on warnings too
+npx skillcheck-cli owner/repo                                    # a GitHub repo, before you clone it
+npx skillcheck-cli https://github.com/owner/repo/tree/main/skills/name   # one skill inside a repo
+npx skillcheck-cli ./skills                                      # a local skill, bundle or SKILL.md
+npx skillcheck-cli . --strict                                    # before you publish: fail on warnings too
 ```
 
 Node.js 20+. Remote targets also need `git`.
@@ -149,7 +149,7 @@ Exit codes: `0` clean, `1` problems found, `2` usage error, nothing to scan, or 
 It is also a library:
 
 ```js
-import { findSkills, checkSkill } from 'skillcheck';
+import { findSkills, checkSkill } from 'skillcheck-cli';
 
 for (const dir of findSkills('./skills')) {
   const { name, findings } = checkSkill(dir);
