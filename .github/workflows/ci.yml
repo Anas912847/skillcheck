@@ -4,6 +4,10 @@ on:
     branches: [main]
   pull_request:
 
+# Read-only token: a pull request's code can't write to the repo through CI.
+permissions:
+  contents: read
+
 jobs:
   test:
     strategy:
